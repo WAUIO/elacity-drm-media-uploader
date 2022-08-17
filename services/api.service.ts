@@ -1,6 +1,29 @@
+/* eslint-disable prefer-arrow/prefer-arrow-functions */
 import {IncomingMessage} from "http";
 import {Service, ServiceBroker, Context} from "moleculer";
 import ApiGateway from "moleculer-web";
+
+const cors = {
+	// Configures the Access-Control-Allow-Origin CORS header.
+	origin: "*",
+	// Configures the Access-Control-Allow-Methods CORS header.
+	methods: ["GET", "OPTIONS", "POST", "PUT", "DELETE"],
+	// Configures the Access-Control-Allow-Headers CORS header.
+	allowedHeaders: [
+		"Origin",
+		"X-Requested-With",
+		"Content-Type",
+		"Accept",
+		"Authorization",
+		"X-Target-Flow",
+	],
+	// Configures the Access-Control-Expose-Headers CORS header.
+	exposedHeaders: [] as string[],
+	// Configures the Access-Control-Allow-Credentials CORS header.
+	credentials: false,
+	// Configures the Access-Control-Max-Age CORS header.
+	maxAge: 3600,
+};
 
 export default class ApiService extends Service {
 
@@ -14,12 +37,15 @@ export default class ApiService extends Service {
 			settings: {
 				port: process.env.PORT || 3000,
 
+				cors,
+
 				routes: [{
 					path: "/api",
 					whitelist: [
 						// Access to any actions in all services under "/api" URL
 						"**",
 					],
+
 					// Route-level Express middlewares. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Middlewares
 					use: [],
 					// Enable/disable parameter merging method. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Disable-merging
@@ -35,34 +61,9 @@ export default class ApiService extends Service {
 					// The gateway will dynamically build the full routes from service schema.
 					autoAliases: true,
 
-					aliases:{},
-					/**
-					 * Before call hook. You can check the request.
-					 * @param {Context} ctx
-					 * @param {Object} route
-					 * @param {IncomingMessage} req
-					 * @param {ServerResponse} res
-					 * @param {Object} data
-					onBeforeCall(ctx: Context<any,{userAgent: string}>,
-					 route: object, req: IncomingMessage, res: ServerResponse) {
-					  Set request headers to context meta
-					  ctx.meta.userAgent = req.headers["user-agent"];
+					aliases:{
+						healthz: "healthz.ping",
 					},
-					 */
-
-					/**
-					 * After call hook. You can modify the data.
-					 * @param {Context} ctx
-					 * @param {Object} route
-					 * @param {IncomingMessage} req
-					 * @param {ServerResponse} res
-					 * @param {Object} data
-					 *
-					 onAfterCall(ctx: Context, route: object, req: IncomingMessage, res: ServerResponse, data: object) {
-					// Async function which return with Promise
-					return doSomething(ctx, res, data);
-				},
-					 */
 
 					// Calling options. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Calling-options
 					callingOptions: {},
@@ -70,11 +71,11 @@ export default class ApiService extends Service {
 					bodyParsers: {
 						json: {
 							strict: false,
-							limit: "1MB",
+							limit: "100Mb",
 						},
 						urlencoded: {
 							extended: true,
-							limit: "1MB",
+							limit: "100Mb",
 						},
 					},
 
@@ -83,7 +84,63 @@ export default class ApiService extends Service {
 
 					// Enable/disable logging
 					logging: true,
+				}, {
+					path: "/files",
+
+					// You should disfileSize: 100 * 1024 * 1024,able body parsers
+					bodyParsers: {
+						json: false,
+						urlencoded: false,
+					},
+
+					aliases: {
+						"POST /upload": {
+							action: "files.storeLocalFile",
+							type: "multipart",
+							// Action level busboy config
+							busboyConfig: {
+								limits: {
+									files: 1,
+									// Limit to 2GB
+									fileSize: 2 * 1024 * 1024 * 1024,
+								},
+								onPartsLimit(busboy: any, alias: any, svc: any) {
+									this.logger.warn("Busboy parts limit!", busboy);
+								},
+								onFilesLimit(busboy: any, alias: any, svc: any) {
+									this.logger.warn("Busboy file limit!", busboy);
+								},
+								onFieldsLimit(busboy: any, alias: any, svc: any) {
+									this.logger.warn("Busboy fields limit!", busboy);
+								},
+							},
+						},
+					},
+
+					onBeforeCall(ctx: Context<any, {targetFlow?: string[]}>, route: any, req: IncomingMessage) {
+						// Set request headers to context meta
+						if (req.headers["x-target-flow"]) {
+							ctx.meta.targetFlow = ((req.headers["x-target-flow"] || "") as string).split(",");
+						}
+					},
+
+					// https://github.com/mscdex/busboy#busboy-methods
+					busboyConfig: {
+						limits: {
+							files: 1,
+						},
+					},
+
+					callOptions: {
+						timeout: 0,
+						meta: {
+							engine: "mol",
+						},
+					},
+
+					mappingPolicy: "restrict",
 				}],
+
 				// Do not log client side errors (does not log an error response when the error.code is 400<=X<500)
 				log4XXResponses: false,
 				// Logging the request parameters. Set to any log level to enable it. E.g. "info"

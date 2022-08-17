@@ -17,8 +17,13 @@
 			],
 			"cwd": "${workspaceRoot}",
 			"args": [
-				"services/**/*.service.ts"
-			]
+				"--config", "./moleculer.config.ts",
+				"**/*.service.ts",
+				"services"
+			],
+			"env": {
+				"PORT": "3001"
+			}
 		},
 		{
 			"type": "node",
