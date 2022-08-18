@@ -9,18 +9,11 @@ export default class PinataServiceImpl extends Service {
 			this.mergeSchemas(
 				{
 					name: "bento",
-					settings: {
-
-					},
+					settings: {},
 					mixins: [
 						Bento4Service({
-              bin: process.env.BENTO4_BIN,
-              use: [
-								"mp4dash",
-								"mp4info",
-								"mp4fragment",
-								"mp4encrypt",
-							],
+							bin: process.env.BENTO4_BIN,
+							use: ["mp4dash", "mp4info", "mp4fragment", "mp4encrypt"],
 						}),
 					],
 				},

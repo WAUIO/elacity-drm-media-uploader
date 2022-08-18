@@ -9,14 +9,7 @@ const cors = {
 	// Configures the Access-Control-Allow-Methods CORS header.
 	methods: ["GET", "OPTIONS", "POST", "PUT", "DELETE"],
 	// Configures the Access-Control-Allow-Headers CORS header.
-	allowedHeaders: [
-		"Origin",
-		"X-Requested-With",
-		"Content-Type",
-		"Accept",
-		"Authorization",
-		"X-Target-Flow",
-	],
+	allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization", "X-Target-Flow"],
 	// Configures the Access-Control-Expose-Headers CORS header.
 	exposedHeaders: [] as string[],
 	// Configures the Access-Control-Allow-Credentials CORS header.
@@ -26,7 +19,6 @@ const cors = {
 };
 
 export default class ApiService extends Service {
-
 	public constructor(broker: ServiceBroker) {
 		super(broker);
 		// @ts-ignore
@@ -39,107 +31,110 @@ export default class ApiService extends Service {
 
 				cors,
 
-				routes: [{
-					path: "/api",
-					whitelist: [
-						// Access to any actions in all services under "/api" URL
-						"**",
-					],
+				routes: [
+					{
+						path: "/api",
+						whitelist: [
+							// Access to any actions in all services under "/api" URL
+							"**",
+						],
 
-					// Route-level Express middlewares. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Middlewares
-					use: [],
-					// Enable/disable parameter merging method. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Disable-merging
-					mergeParams: true,
+						// Route-level Express middlewares. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Middlewares
+						use: [],
+						// Enable/disable parameter merging method. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Disable-merging
+						mergeParams: true,
 
-					// Enable authentication. Implement the logic into `authenticate` method. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Authentication
-					authentication: false,
+						// Enable authentication. Implement the logic into `authenticate` method. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Authentication
+						authentication: false,
 
-					// Enable authorization. Implement the logic into `authorize` method. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Authorization
-					authorization: false,
+						// Enable authorization. Implement the logic into `authorize` method. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Authorization
+						authorization: false,
 
-					// The auto-alias feature allows you to declare your route alias directly in your services.
-					// The gateway will dynamically build the full routes from service schema.
-					autoAliases: true,
+						// The auto-alias feature allows you to declare your route alias directly in your services.
+						// The gateway will dynamically build the full routes from service schema.
+						autoAliases: true,
 
-					aliases:{
-						healthz: "healthz.ping",
-					},
-
-					// Calling options. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Calling-options
-					callingOptions: {},
-
-					bodyParsers: {
-						json: {
-							strict: false,
-							limit: "100Mb",
+						aliases: {
+							healthz: "healthz.ping",
 						},
-						urlencoded: {
-							extended: true,
-							limit: "100Mb",
+
+						// Calling options. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Calling-options
+						callingOptions: {},
+
+						bodyParsers: {
+							json: {
+								strict: false,
+								limit: "100Mb",
+							},
+							urlencoded: {
+								extended: true,
+								limit: "100Mb",
+							},
 						},
+
+						// Mapping policy setting. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Mapping-policy
+						mappingPolicy: "all", // Available values: "all", "restrict"
+
+						// Enable/disable logging
+						logging: true,
 					},
+					{
+						path: "/files",
 
-					// Mapping policy setting. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Mapping-policy
-					mappingPolicy: "all", // Available values: "all", "restrict"
+						// You should disfileSize: 100 * 1024 * 1024,able body parsers
+						bodyParsers: {
+							json: false,
+							urlencoded: false,
+						},
 
-					// Enable/disable logging
-					logging: true,
-				}, {
-					path: "/files",
-
-					// You should disfileSize: 100 * 1024 * 1024,able body parsers
-					bodyParsers: {
-						json: false,
-						urlencoded: false,
-					},
-
-					aliases: {
-						"POST /upload": {
-							action: "files.storeLocalFile",
-							type: "multipart",
-							// Action level busboy config
-							busboyConfig: {
-								limits: {
-									files: 1,
-									// Limit to 2GB
-									fileSize: 2 * 1024 * 1024 * 1024,
-								},
-								onPartsLimit(busboy: any, alias: any, svc: any) {
-									this.logger.warn("Busboy parts limit!", busboy);
-								},
-								onFilesLimit(busboy: any, alias: any, svc: any) {
-									this.logger.warn("Busboy file limit!", busboy);
-								},
-								onFieldsLimit(busboy: any, alias: any, svc: any) {
-									this.logger.warn("Busboy fields limit!", busboy);
+						aliases: {
+							"POST /upload": {
+								action: "files.storeLocalFile",
+								type: "multipart",
+								// Action level busboy config
+								busboyConfig: {
+									limits: {
+										files: 1,
+										// Limit to 2GB
+										fileSize: 2 * 1024 * 1024 * 1024,
+									},
+									onPartsLimit(busboy: any, alias: any, svc: any) {
+										this.logger.warn("Busboy parts limit!", busboy);
+									},
+									onFilesLimit(busboy: any, alias: any, svc: any) {
+										this.logger.warn("Busboy file limit!", busboy);
+									},
+									onFieldsLimit(busboy: any, alias: any, svc: any) {
+										this.logger.warn("Busboy fields limit!", busboy);
+									},
 								},
 							},
 						},
-					},
 
-					onBeforeCall(ctx: Context<any, {targetFlow?: string[]}>, route: any, req: IncomingMessage) {
-						// Set request headers to context meta
-						if (req.headers["x-target-flow"]) {
-							ctx.meta.targetFlow = ((req.headers["x-target-flow"] || "") as string).split(",");
-						}
-					},
-
-					// https://github.com/mscdex/busboy#busboy-methods
-					busboyConfig: {
-						limits: {
-							files: 1,
+						onBeforeCall(ctx: Context<any, {targetFlow?: string[]}>, route: any, req: IncomingMessage) {
+							// Set request headers to context meta
+							if (req.headers["x-target-flow"]) {
+								ctx.meta.targetFlow = ((req.headers["x-target-flow"] || "") as string).split(",");
+							}
 						},
-					},
 
-					callOptions: {
-						timeout: 0,
-						meta: {
-							engine: "mol",
+						// https://github.com/mscdex/busboy#busboy-methods
+						busboyConfig: {
+							limits: {
+								files: 1,
+							},
 						},
-					},
 
-					mappingPolicy: "restrict",
-				}],
+						callOptions: {
+							timeout: 0,
+							meta: {
+								engine: "mol",
+							},
+						},
+
+						mappingPolicy: "restrict",
+					},
+				],
 
 				// Do not log client side errors (does not log an error response when the error.code is 400<=X<500)
 				log4XXResponses: false,
@@ -156,7 +151,6 @@ export default class ApiService extends Service {
 			},
 
 			methods: {
-
 				/**
 				 * Authenticate the request. It checks the `Authorization` token value in the request header.
 				 * Check the token value & resolve the user by the token.
@@ -198,7 +192,6 @@ export default class ApiService extends Service {
 					}
 				},
 				 */
-
 				/**
 				 * Authorize the request. Check that the authenticated user has right to access the resource.
 				 *
@@ -225,7 +218,6 @@ export default class ApiService extends Service {
 				},
 				 */
 			},
-
 		});
 	}
 }

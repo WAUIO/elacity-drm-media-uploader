@@ -1,10 +1,10 @@
 "use strict";
 
-import { Errors, ServiceBroker} from "moleculer";
+import {Errors, ServiceBroker} from "moleculer";
 import TestService from "../../../services/healthz.service";
 
 describe("Test 'helthz' service", () => {
-	const broker = new ServiceBroker({ logger: false });
+	const broker = new ServiceBroker({logger: false});
 	broker.createService(TestService);
 
 	beforeAll(() => broker.start());

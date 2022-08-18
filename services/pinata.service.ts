@@ -9,13 +9,11 @@ export default class PinataServiceImpl extends Service {
 			this.mergeSchemas(
 				{
 					name: "pinata",
-					settings: {
-
-					},
+					settings: {},
 					mixins: [
 						PinataService({
-              apiKey: process.env.PINATA_API_KEY,
-              apiSecretKey: process.env.PINATA_SECRET_API_KEY,
+							apiKey: process.env.PINATA_API_KEY,
+							apiSecretKey: process.env.PINATA_SECRET_API_KEY,
 						}),
 					],
 				},

@@ -29,7 +29,7 @@ export default class FilesActionsMixin implements Partial<ServiceSchema>, ThisTy
 							mkdir(path.join(uploadDir, subFolder));
 
 							// prepare file writting
-							const uniqueFileName = this.randomName((ctx.meta.filename).replace(/[^\w\.\-\_]+/ig, ""));
+							const uniqueFileName = this.randomName(ctx.meta.filename.replace(/[^\w\.\-\_]+/gi, ""));
 							const filePath = path.join(uploadDir, subFolder, uniqueFileName);
 							const f = fs.createWriteStream(filePath);
 							f.on("close", async () => {

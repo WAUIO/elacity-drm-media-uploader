@@ -11,21 +11,21 @@ export default (settings: IPinataServiceSettings): ServiceSchema<IPinataServiceS
 	name: "pinata",
 	settings: merge(
 		{
-      // @see https://www.npmjs.com/package/@pinata/sdk#setup
+			// @see https://www.npmjs.com/package/@pinata/sdk#setup
 			apiKey: null,
 
-      apiSecretKey: null,
+			apiSecretKey: null,
 
-      exposeMethods: [
-        "hashMetadata",
-        "pinByHash",
-        "pinFileToIPFS",
-        "pinFromFS",
-        "pinJSONToIPFS",
-        "unpin",
-        "userPinnedDataTotal",
-        "testAuthentication",
-      ],
+			exposeMethods: [
+				"hashMetadata",
+				"pinByHash",
+				"pinFileToIPFS",
+				"pinFromFS",
+				"pinJSONToIPFS",
+				"unpin",
+				"userPinnedDataTotal",
+				"testAuthentication",
+			],
 		},
 		settings,
 	),
@@ -41,6 +41,6 @@ export default (settings: IPinataServiceSettings): ServiceSchema<IPinataServiceS
 		const serviceSettings = schema.settings as IPinataServiceSettings;
 		schema.pinataApi = pinataSDK(serviceSettings.apiKey, serviceSettings.apiSecretKey);
 
-    populateActions(schema);
+		populateActions(schema);
 	},
 });
