@@ -81,7 +81,6 @@ export default class ApiService extends Service {
 					{
 						path: "/files",
 
-						// You should disfileSize: 100 * 1024 * 1024,able body parsers
 						bodyParsers: {
 							json: false,
 							urlencoded: false,
@@ -97,15 +96,16 @@ export default class ApiService extends Service {
 										files: 1,
 										// Limit to 2GB
 										fileSize: 2 * 1024 * 1024 * 1024,
+										fieldSize: 2 * 1024 * 1024 * 1024,
 									},
 									onPartsLimit(busboy: any, alias: any, svc: any) {
-										this.logger.warn("Busboy parts limit!", busboy);
+										broker.logger.warn("Busboy parts limit!", busboy);
 									},
 									onFilesLimit(busboy: any, alias: any, svc: any) {
-										this.logger.warn("Busboy file limit!", busboy);
+										broker.logger.warn("Busboy file limit!", busboy);
 									},
 									onFieldsLimit(busboy: any, alias: any, svc: any) {
-										this.logger.warn("Busboy fields limit!", busboy);
+										broker.logger.warn("Busboy fields limit!", busboy);
 									},
 								},
 							},

@@ -1,0 +1,62 @@
+ARG NODE_VERSION=18.7
+ARG NODE_ENV=production
+
+FROM node:${NODE_VERSION}-alpine
+
+# Start bento4 setup ------
+ENV BENTO4_VERSION=1.6.0-637
+ENV BENTO4_INSTALL_DIR=/opt/bento4
+ENV PATH=/opt/bento4/bin:${PATH}
+ENV BENTO4_BIN=/opt/bento4/bin
+
+RUN apk update \
+  && apk add --no-cache \
+  ca-certificates bash python3 wget libgcc make gcc g++
+
+RUN cd /tmp/ \
+  && wget -O Bento4-${BENTO4_VERSION}.tar.gz https://github.com/axiomatic-systems/Bento4/archive/v${BENTO4_VERSION}.tar.gz \
+  && tar -xzvf Bento4-${BENTO4_VERSION}.tar.gz && rm Bento4-${BENTO4_VERSION}.tar.gz  
+
+RUN mkdir -p \
+  ${BENTO4_INSTALL_DIR}/bin \
+  ${BENTO4_INSTALL_DIR}/scripts \
+  ${BENTO4_INSTALL_DIR}/include
+
+RUN cd /tmp/Bento4-${BENTO4_VERSION}/Build/Targets/x86-unknown-linux \
+  && make AP4_BUILD_CONFIG=Release
+
+RUN cd /tmp \
+  && cp -r Bento4-${BENTO4_VERSION}/Build/Targets/x86-unknown-linux/Release/. ${BENTO4_INSTALL_DIR}/bin \
+  && cp -r Bento4-${BENTO4_VERSION}/Source/Python/utils/. ${BENTO4_INSTALL_DIR}/utils \
+  && cp -r Bento4-${BENTO4_VERSION}/Source/Python/wrappers/. ${BENTO4_INSTALL_DIR}/bin \
+  && cp -r Bento4-${BENTO4_VERSION}/Source/C++/**/*.h . ${BENTO4_INSTALL_DIR}/include
+
+RUN rm -rf /var/cache/apk/* /tmp/*
+
+# End of bento setup ------
+
+# Build and cleanup
+ENV NODE_ENV=$NODE_ENV
+WORKDIR /app
+
+ADD package.json ./
+ADD package-lock.json ./
+RUN npm i -g npm@latest
+RUN npm i
+ADD . .
+RUN npm run build \
+  && npm prune \
+  && chmod +x ./entrypoint.sh
+
+# RUN ls -alh \
+#   && cp package.* ./ \
+#   && npm i \
+#   && cp -R * ./ \
+#   && npm run build \
+#   && npm prune \
+#   && chmod +x ./entrypoint.sh
+
+EXPOSE 3000
+ENV SERVICEDIR=dist/services
+
+ENTRYPOINT ["sh", "-c", "./entrypoint.sh"]
