@@ -122,6 +122,9 @@ export default class ApiService extends Service {
 						busboyConfig: {
 							limits: {
 								files: 1,
+								// Limit to 2GB
+								fileSize: 2 * 1024 * 1024 * 1024,
+								fieldSize: 2 * 1024 * 1024 * 1024,
 							},
 						},
 
